@@ -117,7 +117,7 @@ def main():
         datasets = list_datasets()
         st.write("Datasets found:", datasets)  # debug 用
 
-        default_path = "/user_data/AIoT/2025ML-spamEmail/datasets/processed/sms_spam_clean.csv"
+        default_path = "datasets/processed/sms_spam_clean.csv"
         if not datasets:
             datasets = [default_path]
 
@@ -128,8 +128,7 @@ def main():
         )
 
         if not ds_path:
-            st.error("No dataset selected. Please choose a valid CSV file.")
-            st.stop()
+            ds_path = default_path
 
         try:
             df = load_csv(ds_path)
