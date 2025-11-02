@@ -26,22 +26,27 @@ st.set_page_config(page_title="Spam Classifier — Visualizations", layout="wide
 def ts() -> str:
     return time.strftime("%Y%m%d-%H%M%S")
 
-
 @st.cache_data(show_spinner=False)
 def load_csv(path: str) -> pd.DataFrame:
+    if not path:
+        raise ValueError("Dataset path is None. Please select a valid CSV file.")
     return pd.read_csv(path)
-
 
 @st.cache_data(show_spinner=False)
 def list_datasets() -> List[str]:
+    base = os.path.dirname(__file__)
     paths: List[str] = []
-    for root in ("datasets", os.path.join("datasets", "processed")):
-        if os.path.isdir(root):
-            for name in os.listdir(root):
-                p = os.path.join(root, name)
-                if name.lower().endswith(".csv") and os.path.isfile(p):
-                    paths.append(p)
+    for subdir in ("datasets", os.path.join("datasets", "processed")):
+        full_dir = os.path.join(base, subdir)
+        if os.path.isdir(full_dir):
+            for name in os.listdir(full_dir):
+                if name.lower().endswith(".csv"):
+                    full_path = os.path.join(full_dir, name)
+                    if os.path.isfile(full_path):
+                        paths.append(full_path)
     return sorted(paths)
+
+
 
 
 def infer_cols(df: pd.DataFrame) -> Tuple[str, str]:
@@ -110,8 +115,28 @@ def main():
     with st.sidebar:
         st.header("Inputs")
         datasets = list_datasets()
-        ds_path = st.selectbox("Dataset CSV", datasets, index=datasets.index("datasets/processed/sms_spam_clean.csv") if "datasets/processed/sms_spam_clean.csv" in datasets else 0)
-        df = load_csv(ds_path)
+        st.write("Datasets found:", datasets)  # debug 用
+
+        default_path = "/user_data/AIoT/2025ML-spamEmail/datasets/processed/sms_spam_clean.csv"
+        if not datasets:
+            datasets = [default_path]
+
+        ds_path = st.selectbox(
+            "Dataset CSV",
+            datasets,
+            index=datasets.index(default_path) if default_path in datasets else 0
+        )
+
+        if not ds_path:
+            st.error("No dataset selected. Please choose a valid CSV file.")
+            st.stop()
+
+        try:
+            df = load_csv(ds_path)
+        except Exception as e:
+            st.error(f"Failed to load dataset: {e}")
+            st.stop()
+
         label_col, text_col = infer_cols(df)
         label_col = st.selectbox("Label column", options=list(df.columns), index=list(df.columns).index(label_col))
         text_col = st.selectbox("Text column", options=list(df.columns), index=list(df.columns).index(text_col))
@@ -202,7 +227,6 @@ def main():
 
         # Live Inference
         st.subheader("Live Inference")
-        # Provide two quick examples to try
         ex_spam = "Free entry in 2 a wkly comp to win cash now! Call +44 906-170-1461 to claim prize"
         ex_ham = "Ok, I'll see you at 7 pm for dinner. Thanks!"
         c_ex1, c_ex2 = st.columns(2)
@@ -213,7 +237,6 @@ def main():
             if st.button("Use ham example"):
                 st.session_state["input_text"] = ex_ham
 
-        # Text area bound to session_state so examples populate it
         if "input_text" not in st.session_state:
             st.session_state["input_text"] = ""
         user_text = st.text_area("Enter a message to classify", key="input_text")
@@ -228,7 +251,6 @@ def main():
                 pred_label = pos_label if prob >= threshold else neg_label
                 st.success(f"Prediction: {pred_label}  |  spam-prob = {prob:.4f}  (threshold = {threshold:.2f})")
 
-                # Probability bar (0..1) with threshold marker
                 fig_g, ax_g = plt.subplots(figsize=(6, 0.6))
                 ax_g.barh([0], [prob], color="#d62728" if pred_label == pos_label else "#1f77b4")
                 ax_g.axvline(threshold, color="black", linestyle="--", linewidth=1)
@@ -239,11 +261,8 @@ def main():
                 st.pyplot(fig_g)
             else:
                 st.info("Please enter a non-empty message.")
-
-        
     else:
         st.info("Model artifacts not found in 'models/'. Train the model first to enable performance plots.")
-
 
 if __name__ == "__main__":
     main()
