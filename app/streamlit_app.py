@@ -34,7 +34,7 @@ def load_csv(path: str) -> pd.DataFrame:
 
 @st.cache_data(show_spinner=False)
 def list_datasets() -> List[str]:
-    base = os.path.dirname(__file__)
+    base = os.getcwd()
     paths: List[str] = []
     for subdir in ("datasets", os.path.join("datasets", "processed")):
         full_dir = os.path.join(base, subdir)
