@@ -35,19 +35,19 @@ def load_csv(path: str) -> pd.DataFrame:
 @st.cache_data(show_spinner=False)
 def list_datasets() -> List[str]:
     base = os.getcwd()
+    dummy = time.time()  # 強制快取失效
+    seen = set()
     paths: List[str] = []
     for subdir in ("datasets", os.path.join("datasets", "processed")):
         full_dir = os.path.join(base, subdir)
         if os.path.isdir(full_dir):
             for name in os.listdir(full_dir):
-                if name.lower().endswith(".csv"):
+                if name.lower().endswith(".csv") and name not in seen:
+                    seen.add(name)
                     full_path = os.path.join(full_dir, name)
                     if os.path.isfile(full_path):
                         paths.append(full_path)
     return sorted(paths)
-
-
-
 
 def infer_cols(df: pd.DataFrame) -> Tuple[str, str]:
     # Try to infer label/text columns
