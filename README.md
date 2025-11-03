@@ -16,7 +16,7 @@ This project builds upon patterns and datasets related to the Spam Email problem
 - https://github.com/PacktPublishing/Hands-On-Artificial-Intelligence-for-Cybersecurity.git
 
 # Demo Site
-https://2025spamemail.streamlit.app/
+https://2025ml-spamemail-3wzv7tk6xtxtue3epyr7lr.streamlit.app/
 
 ## Setup
 
